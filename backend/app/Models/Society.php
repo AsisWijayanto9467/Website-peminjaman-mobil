@@ -31,8 +31,12 @@ class Society extends Model
     {
         return [
             'password' => 'hashed',
+            'born_date' => 'date',
         ];
     }
+
+    const CREATED_AT = null;
+    const UPDATED_AT = 'updated_at';
 
     public function regional() {
         return $this->belongsTo(Regional::class);
@@ -48,5 +52,9 @@ class Society extends Model
 
     public function InstallmentApplyStatuses() {
         return $this->hasMany(InstallmentApplyStatus::class);
+    }
+
+    public function InstallmentPayments() {
+        return $this->hasMany(InstallmentPayment::class);
     }
 }

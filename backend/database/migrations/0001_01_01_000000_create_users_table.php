@@ -13,8 +13,13 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('username');
-            $table->string('password');
+            $table->char("id_card_number", 16)->unique(); // Ganti username dengan id_card_number
+            $table->string("password");
+            $table->string("name");
+            $table->date("born_date")->nullable();
+            $table->enum("gender", ["male", "female"])->nullable();
+            $table->text("address")->nullable();
+            $table->enum('role', ['admin', 'officer', 'validator'])->default('officer');
             $table->rememberToken();
             $table->timestamps();
         });

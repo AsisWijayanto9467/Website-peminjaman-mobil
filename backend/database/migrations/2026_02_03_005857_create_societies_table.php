@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('societies', function (Blueprint $table) {
             $table->id();
-            $table->char("id_card_number", 8);
+            $table->char("id_card_number", 16)->unique();
             $table->string("password");
             $table->string("name");
             $table->date("born_date");

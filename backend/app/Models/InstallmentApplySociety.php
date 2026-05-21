@@ -32,4 +32,8 @@ class InstallmentApplySociety extends Model
     public function InstallmentApplyStatuses() {
         return $this->hasMany(InstallmentApplyStatus::class);
     }
+
+    public function InstallmentPayments() {
+        return $this->hasMany(InstallmentPayment::class);
+    }
 }

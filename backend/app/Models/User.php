@@ -19,8 +19,13 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'username',
+        'id_card_number',
         'password',
+        'name',
+        'born_date',
+        'gender',
+        'address',
+        'role',
     ];
 
     /**
@@ -33,6 +38,10 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    const CREATED_AT = null;
+    const UPDATED_AT = 'updated_at';
+
+
     /**
      * Get the attributes that should be cast.
      *
@@ -42,6 +51,7 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'born_date' => 'date',
         ];
     }
 
