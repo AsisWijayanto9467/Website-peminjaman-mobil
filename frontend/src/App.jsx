@@ -26,6 +26,9 @@ import ApplicationManagement from "./pages/Validator/Application/ApplicationMana
 import ValidationManagement from "./pages/Validator/Validation/ValidationManagement";
 import InstallmentValidatorReport from "./pages/Validator/Reports/InstallmentValidatorReport";
 import ValidationValidatorReport from "./pages/Validator/Reports/ValidationValidatorReport";
+import Profile from "./pages/User/Profile/Profile";
+import HistoryPayments from "./pages/User/Payments/HistoryPayments";
+import Payment from "./pages/User/Payments/Payment";
 
 export default function App() {
   return (
@@ -39,6 +42,9 @@ export default function App() {
         {/* Society Routes (Masyarakat) */}
         <Route element={<ProtectedRoute allowedRoles={['society']} />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/payment/history" element={<HistoryPayments />} />
+          <Route path="/payment/management" element={<Payment />} />
           <Route path="/list/instalment" element={<List />} />
           <Route path="/list/instalment/:id" element={<DetailList />} />
         </Route>

@@ -1,8 +1,6 @@
-import React from 'react'
-import { useState } from 'react'
+import React, { useState } from 'react';
 import api from '../../../services/api';
 import { Link, useNavigate } from 'react-router-dom';
-
 
 export default function CreateValidation() {
     const navigate = useNavigate();
@@ -11,20 +9,12 @@ export default function CreateValidation() {
     const [jobDescription, setJobDescription] = useState("");
     const [income, setIncome] = useState("");
     const [reasonAccepted, setReasonAccepted] = useState("");
-    const [setLoading] = useState(false);
-    const [confirm, setConfirm] = useState(false);
+    const [loading, setLoading] = useState(false); setLoading
+    const [isNotWorking, setIsNotWorking] = useState(false);
     
-    
-    const hanldeDisabled = (e) => {
-        e.preventDefault();
-
+    const handleEmploymentStatus = (e) => {
         const value = e.target.value;
-
-        if(value === "yes") {
-            setConfirm(false);
-        } else {
-            setConfirm(true);
-        }
+        setIsNotWorking(value === "no");
     }
 
     const handleSubmit = async(e) => {
@@ -33,15 +23,17 @@ export default function CreateValidation() {
         setError("");
 
         try {
-            await api.post("/validation", {
-                job : job,
-                job_description : jobDescription,
-                income : income,
-                reason_accepted : reasonAccepted
+            const response = await api.post("/validation", {
+                job: job,
+                job_description: jobDescription,
+                income: income,
+                reason_accepted: reasonAccepted
             });
-
+            
+            console.log("Success:", response.data);
             navigate("/");
         } catch (error) {
+            console.error("Error details:", error);
             const data = error.response?.data;
             if(data?.errors) {
                 const message = Object.values(data.errors).flat().join(" | ");
@@ -49,7 +41,7 @@ export default function CreateValidation() {
             } else if(data?.message) {
                 setError(data.message);
             } else if(error.message) {
-                setError(error.message)
+                setError(error.message);
             } else {
                 setError("Terjadi kesalahan");
             }
@@ -85,26 +77,46 @@ export default function CreateValidation() {
                 </header>
 
                 {error && (
-                    <div classNameName="alert alert-danger mt-4">{error}</div>
+                    <div className="alert alert-danger mt-4">{error}</div> 
                 )}
 
                 <div className="container">
-
                     <form onSubmit={handleSubmit}>
                         <div className="row mb-4">
-
                             <div className="col-md-6">
                                 <div className="form-group">
                                     <div className="d-flex align-items-center mb-3">
                                         <label className="mr-3 mb-0">Are you working?</label>
-                                        <select onChange={hanldeDisabled} className="form-control-sm">
+                                        <select onChange={handleEmploymentStatus} className="form-control-sm">
                                             <option value="yes">Yes, I have</option>
                                             <option value="no">No</option>
                                         </select>
                                     </div>
-                                    <input type="text" placeholder="Your Job" value={job} onChange={(e) => setJob(e.target.value)} disabled={confirm} className="form-control mt-2 mb-2" />
-                                    <textarea disabled={confirm} value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} className="form-control" cols="30" rows="5" placeholder="describe what you do in your job"></textarea>
-                                    <input type="number" value={income} onChange={(e) => setIncome(e.target.value)} placeholder="Income (Rp)" disabled={confirm} className="form-control mt-2" />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Your Job" 
+                                        value={job} 
+                                        onChange={(e) => setJob(e.target.value)} 
+                                        disabled={isNotWorking} 
+                                        className="form-control mt-2 mb-2" 
+                                    />
+                                    <textarea 
+                                        disabled={isNotWorking} 
+                                        value={jobDescription} 
+                                        onChange={(e) => setJobDescription(e.target.value)} 
+                                        className="form-control" 
+                                        cols="30" 
+                                        rows="5" 
+                                        placeholder="describe what you do in your job"
+                                    ></textarea>
+                                    <input 
+                                        type="number" 
+                                        value={income} 
+                                        onChange={(e) => setIncome(e.target.value)} 
+                                        placeholder="Income (Rp)" 
+                                        disabled={isNotWorking} 
+                                        className="form-control mt-2" 
+                                    />
                                 </div>
                             </div>
                             
@@ -113,16 +125,27 @@ export default function CreateValidation() {
                                     <div className="d-flex align-items-center mb-3">
                                         <label className="mr-3 mb-0">Reason Accepted</label>
                                     </div>
-                                    <textarea value={reasonAccepted} onChange={(e) => setReasonAccepted(e.target.value)} className="form-control" cols="30" rows="6" placeholder="Explain why you should be accepted"></textarea>
+                                    <textarea 
+                                        value={reasonAccepted} 
+                                        onChange={(e) => setReasonAccepted(e.target.value)} 
+                                        className="form-control" 
+                                        cols="30" 
+                                        rows="6" 
+                                        placeholder="Explain why you should be accepted"
+                                    ></textarea>
                                 </div>
                             </div>
                         </div>
 
-                        <button className="btn btn-primary" type="submit" >Send Request</button>
+                        <button 
+                            className="btn btn-primary" 
+                            type="submit" 
+                            disabled={loading} 
+                        >
+                            {loading ? 'Sending...' : 'Send Request'}
+                        </button>
                     </form>
-
                 </div>
-
             </main>
 
             <footer>
