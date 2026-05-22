@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Regional;
 use App\Models\Society;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -232,6 +233,31 @@ class AuthController extends Controller
             return response()->json([
                 "message" => "Server error",
                 "errors" => $th->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getRegional()
+    {
+        try {
+            $regionals = Regional::withCount('societies')
+                ->orderBy('province')
+                ->orderBy('district')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data regional berhasil diambil',
+                'data' => $regionals
+            ], 200);
+
+        } catch (\Throwable $th) {
+            Log::error("Failed to fetch regionals: " . $th->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data regional',
+                'error' => $th->getMessage()
             ], 500);
         }
     }

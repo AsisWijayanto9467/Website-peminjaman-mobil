@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import api from '../../services/api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 export default function Login() {
     const navigate = useNavigate();
@@ -8,6 +8,21 @@ export default function Login() {
     const [error, setError] = useState("");
     const [idCardNumber, setIdCardNumber] = useState("");
     const [password, setPassword] = useState("");
+
+    const getRedirectPath = (role) => {
+        switch (role) {
+            case 'admin':
+                return '/admin/dashboard';
+            case 'officer':
+                return '/officer/dashboard';
+            case 'validator':
+                return '/validator/dashboard';
+            case 'society':
+                return '/dashboard';
+            default:
+                return '/dashboard';
+        }
+    };
 
     const handleSubmit = async(e) => {
         e.preventDefault();
@@ -20,15 +35,27 @@ export default function Login() {
                 password : password
             });
 
-            const token = res.data.token;
-            localStorage.setItem("token", token);
+            // Ambil data user dari response
+            const userData = res.data.user;
+            const token = userData.token;
+            const role = userData.role;
+            const name = userData.name;
 
-            navigate("/dashboard");
+            // Simpan token dan role ke localStorage
+            localStorage.setItem("token", token);
+            localStorage.setItem("role", role);
+            localStorage.setItem("name", name);
+            localStorage.setItem("user", JSON.stringify(userData));
+
+            // Redirect berdasarkan role
+            const redirectPath = getRedirectPath(role);
+            navigate(redirectPath);
+            
         } catch (error) {
             const data = error.response?.data;
 
             if(data?.errors) {
-                const message = Object.values(data.errors).flat();
+                const message = Object.values(data.errors).flat().join(", ");
                 setError(message);
             } else if(data?.message) {
                 setError(data.message);
@@ -41,7 +68,6 @@ export default function Login() {
             setLoading(false);
         }
     }
-
 
     return (
         <>
@@ -59,20 +85,52 @@ export default function Login() {
                                     <h4 className="mb-0">Login</h4>
                                 </div>
                                 {error && (
-                                    <div className="alert alert-danger">{error}</div>
+                                    <div className="alert alert-danger mx-3 mt-3">{error}</div>
                                 )}
                                 <div className="card-body">
                                     <div className="form-group row align-items-center">
                                         <div className="col-4 text-right">ID Card Number</div>
-                                        <div className="col-8"><input type="text" value={idCardNumber} onChange={(e) => setIdCardNumber(e.target.value)} className="form-control" /></div>
+                                        <div className="col-8">
+                                            <input 
+                                                type="text" 
+                                                value={idCardNumber} 
+                                                onChange={(e) => setIdCardNumber(e.target.value)} 
+                                                className="form-control" 
+                                                placeholder="Masukkan ID Card Number"
+                                                required
+                                            />
+                                        </div>
                                     </div>
                                     <div className="form-group row align-items-center">
                                         <div className="col-4 text-right">Password</div>
-                                        <div className="col-8"><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-control" /></div>
+                                        <div className="col-8">
+                                            <input 
+                                                type="password" 
+                                                value={password} 
+                                                onChange={(e) => setPassword(e.target.value)} 
+                                                className="form-control" 
+                                                placeholder="Masukkan Password"
+                                                required
+                                            />
+                                        </div>
                                     </div>
                                     <div className="form-group row align-items-center mt-4">
                                         <div className="col-4"></div>
-                                        <div className="col-8"><button className="btn btn-primary" type="submit" disabled={loading}>{loading ? "Loggingin...." : "Login"}</button></div>
+                                        <div className="col-8">
+                                            <button 
+                                                className="btn btn-primary w-100" 
+                                                type="submit" 
+                                                disabled={loading}
+                                            >
+                                                {loading ? "Logging in..." : "Login"}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="text-center mt-3">
+                                        <span>Belum punya akun? </span>
+                                        <Link to="/register">
+                                            Register
+                                        </Link>
                                     </div>
                                 </div>
                             </form>

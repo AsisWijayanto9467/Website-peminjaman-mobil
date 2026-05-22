@@ -5,6 +5,7 @@ use App\Http\Controllers\API\ApplyInstalmentController;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\InstalmentController;
 use App\Http\Controllers\API\OfficerController;
+use App\Http\Controllers\API\RegionalController;
 use App\Http\Controllers\API\ReportController;
 use App\Http\Controllers\API\SocietyController;
 use App\Http\Controllers\API\ValidationController;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix("v1")->group(function () {
     Route::prefix("auth")->group(function () {
         Route::post("/login", [AuthController::class, "Login"]);
+        Route::post("/get-regional", [AuthController::class, "getRegional"]);
         Route::post("/register", [AuthController::class, "Register"]);
     });
 
@@ -27,7 +29,6 @@ Route::prefix("v1")->group(function () {
         });
 
         Route::middleware("society")->group(function () {
-
             // Validation
             Route::post("/validation", [ValidationController::class, "createValidation"]);
             Route::get("/validations", [ValidationController::class, "getValidation"]);
@@ -73,6 +74,15 @@ Route::prefix("v1")->group(function () {
             // Officer routes
             Route::middleware("officer")->group(function () {
                 Route::prefix("officer")->group(function () {
+                    // regional
+                    Route::prefix("regionals")->group(function () {
+                        Route::get("/", [RegionalController::class, "index"]);
+                        Route::get("/{id}", [RegionalController::class, "show"]);
+                        Route::post("/", [RegionalController::class, "store"]);      // Create
+                        Route::put("/{id}", [RegionalController::class, "update"]);   // Update
+                        Route::delete("/{id}", [RegionalController::class, "destroy"]); // Delete
+                    });
+                    // Brand
                     Route::get("/brands", [OfficerController::class, "getAllBrands"]);
                     Route::get("/brands/{id}", [OfficerController::class, "getBrandById"]);
                     Route::post("/brands", [OfficerController::class, "createBrand"]);
@@ -92,7 +102,7 @@ Route::prefix("v1")->group(function () {
                     Route::post("/tenors", [OfficerController::class, "createAvailableMonth"]);
                     Route::put("/tenors/{id}", [OfficerController::class, "updateAvailableMonth"]);
                     Route::delete("/tenors/{id}", [OfficerController::class, "deleteAvailableMonth"]);
-                    
+
                     // Reports
                     Route::get("/reports/cars", [ReportController::class, "getCarReport"]);
                     Route::get("/reports/payments", [ReportController::class, "getPaymentReport"]);

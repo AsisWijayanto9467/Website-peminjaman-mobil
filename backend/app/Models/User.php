@@ -38,10 +38,6 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    const CREATED_AT = null;
-    const UPDATED_AT = 'updated_at';
-
-
     /**
      * Get the attributes that should be cast.
      *

@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { useState } from 'react'
-import api from '../../services/api';
+import api from '../../../services/api';
 import { Link, useNavigate } from 'react-router-dom';
 
 
@@ -11,7 +11,7 @@ export default function CreateValidation() {
     const [jobDescription, setJobDescription] = useState("");
     const [income, setIncome] = useState("");
     const [reasonAccepted, setReasonAccepted] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [setLoading] = useState(false);
     const [confirm, setConfirm] = useState(false);
     
     
@@ -26,8 +26,6 @@ export default function CreateValidation() {
             setConfirm(true);
         }
     }
-
-
 
     const handleSubmit = async(e) => {
         e.preventDefault();
