@@ -55,37 +55,44 @@ Route::prefix("v1")->group(function () {
         // Staff routes (admin, officer, validator)
         Route::middleware("staff")->group(function () {
             Route::middleware("admin")->group(function () {
-                // Dashboard & Reports
-                Route::get("/dashboard", [ReportController::class, "getDashboardSummary"]);
-                Route::get("/reports/validations", [ReportController::class, "getValidationReport"]);
-                Route::get("/reports/installments", [ReportController::class, "getInstallmentReport"]);
+                Route::prefix("admin")->group(function() {
+                    // Dashboard & Reports
+                    Route::get("/dashboard", [ReportController::class, "getDashboardSummary"]);
+                    Route::get("/reports/validations", [ReportController::class, "getValidationReport"]);
+                    Route::get("/reports/installments", [ReportController::class, "getInstallmentReport"]);
 
-                // Validator/Officer Management
-                Route::post("/users", [AdminController::class, "createUser"]);
-                Route::get("/validators", [AdminController::class, "getAllValidators"]);
-                Route::get("/validators/{id}", [AdminController::class, "getValidatorDetail"]);
-                Route::put("/validators/role", [AdminController::class, "updateValidatorRole"]);
-                Route::delete("/validators", [AdminController::class, "deleteValidator"]);
-                Route::post("/validators/reset-password", [AdminController::class, "resetPassword"]);
+                    // Validator/Officer Management
+                    Route::post("/users", [AdminController::class, "createUser"]);
+                    Route::get("/validators", [AdminController::class, "getAllValidators"]);
+                    Route::get("/validators/{id}", [AdminController::class, "getValidatorDetail"]);
+                    Route::put("/validator/{validator_id}", [AdminController::class, "updateUser"]);
+                    Route::delete("/validator/{validator_id}", [AdminController::class, "deleteValidator"]);
+                });
             });
 
             // Officer routes
             Route::middleware("officer")->group(function () {
                 Route::prefix("officer")->group(function () {
-                    // Brand management
+                    Route::get("/brands", [OfficerController::class, "getAllBrands"]);
+                    Route::get("/brands/{id}", [OfficerController::class, "getBrandById"]);
                     Route::post("/brands", [OfficerController::class, "createBrand"]);
+                    Route::put("/brands/{id}", [OfficerController::class, "updateBrand"]);
+                    Route::delete("/brands/{id}", [OfficerController::class, "deleteBrand"]);
 
                     // Car management
                     Route::get("/cars", [OfficerController::class, "getAllCarsDetail"]);
+                    Route::get("/cars/{id}", [OfficerController::class, "getCarById"]);
                     Route::post("/cars", [OfficerController::class, "createCar"]);
-                    Route::put("/cars", [OfficerController::class, "updateCar"]);
-                    Route::delete("/cars", [OfficerController::class, "deleteCar"]);
+                    Route::put("/cars/{id}", [OfficerController::class, "updateCar"]);
+                    Route::delete("/cars/{id}", [OfficerController::class, "deleteCar"]);
 
                     // Tenor management
+                    Route::get("/tenors", [OfficerController::class, "getAllAvailableMonths"]);
+                    Route::get("/tenors/{id}", [OfficerController::class, "getAvailableMonthById"]);
                     Route::post("/tenors", [OfficerController::class, "createAvailableMonth"]);
-                    Route::put("/tenors", [OfficerController::class, "updateAvailableMonth"]);
-                    Route::delete("/tenors", [OfficerController::class, "deleteAvailableMonth"]);
-
+                    Route::put("/tenors/{id}", [OfficerController::class, "updateAvailableMonth"]);
+                    Route::delete("/tenors/{id}", [OfficerController::class, "deleteAvailableMonth"]);
+                    
                     // Reports
                     Route::get("/reports/cars", [ReportController::class, "getCarReport"]);
                     Route::get("/reports/payments", [ReportController::class, "getPaymentReport"]);

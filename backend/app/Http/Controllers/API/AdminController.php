@@ -41,17 +41,27 @@ class AdminController extends Controller
             }
 
             $request->validate([
-                "username" => "required|string|min:3|unique:users,username",
+                "id_card_number" => "required|string|min:3|unique:users,id_card_number",
                 "password" => "required|string|min:6",
                 "name" => "required|string|max:255",
+                "born_date" => "required|date",
+                "gender" => "required|in:male,female",
+                "address" => "required|string|max:500",
                 "role" => "required|in:officer,validator"
             ]);
 
+            // Create user with all required fields
             $newUser = User::create([
-                "username" => $request->username,
-                "password" => Hash::make($request->password),
+                "id_card_number" => $request->id_card_number,
+                "password" => $request->password, // Will be auto-hashed due to cast
+                "name" => $request->name,
+                "born_date" => $request->born_date,
+                "gender" => $request->gender,
+                "address" => $request->address,
+                "role" => $request->role // Set role in users table
             ]);
 
+            // Create validator record
             $validator = Validator::create([
                 "user_id" => $newUser->id,
                 "role" => $request->role,
@@ -63,7 +73,7 @@ class AdminController extends Controller
             Log::info("New staff account created", [
                 "admin_id" => $user->id,
                 "new_user_id" => $newUser->id,
-                "username" => $request->username,
+                "id_card_number" => $request->id_card_number,
                 "role" => $request->role
             ]);
 
@@ -71,9 +81,9 @@ class AdminController extends Controller
                 "message" => "Staff account created successfully",
                 "user" => [
                     "id" => $newUser->id,
-                    "username" => $newUser->username,
-                    "role" => $validator->role,
-                    "name" => $validator->name,
+                    "id_card_number" => $newUser->id_card_number,
+                    "name" => $newUser->name,
+                    "role" => $newUser->role,
                     "created_at" => $newUser->created_at
                 ]
             ], 201);
@@ -117,7 +127,7 @@ class AdminController extends Controller
                     return [
                         "id" => $validator->id,
                         "user_id" => $validator->user_id,
-                        "username" => $validator->user->username ?? 'N/A',
+                        "id_card_number" => $validator->user->id_card_number ?? 'N/A',
                         "name" => $validator->name,
                         "role" => $validator->role,
                         "total_validations" => \App\Models\Validation::where('validator_id', $validator->id)->count(),
@@ -175,7 +185,7 @@ class AdminController extends Controller
                 "validator" => [
                     "id" => $validator->id,
                     "user_id" => $validator->user_id,
-                    "username" => $validator->user->username ?? 'N/A',
+                    "id_card_number" => $validator->user->id_card_number ?? 'N/A',
                     "name" => $validator->name,
                     "role" => $validator->role,
                     "statistics" => [
@@ -215,64 +225,135 @@ class AdminController extends Controller
     }
 
     /**
-     * Ubah role validator/officer
-     * Update validators set role
+     * Update user (validator/officer) - All fields
      */
-    public function updateValidatorRole(Request $request)
+    public function updateUser(Request $request, $validator_id)
     {
         DB::beginTransaction();
 
         try {
-            $user = $request->user();
+            $admin = $request->user();
 
-            if (!$this->checkAdminAccess($user)) {
+            if (!$this->checkAdminAccess($admin)) {
                 return response()->json([
                     "message" => "Only admin can access this"
                 ], 403);
             }
 
-            $request->validate([
-                "validator_id" => "required|exists:validators,id",
-                "role" => "required|in:officer,validator"
-            ]);
+            $validator = Validator::with('user')->find($validator_id);
 
-            $validator = Validator::find($request->validator_id);
-
-            if ($validator->user_id === $user->id) {
+            if (!$validator) {
                 return response()->json([
-                    "message" => "Cannot change your own role"
+                    "message" => "Validator not found"
+                ], 404);
+            }
+
+            if ($validator->user_id === $admin->id) {
+                return response()->json([
+                    "message" => "Cannot update your own account through this endpoint"
                 ], 403);
             }
 
-            $oldRole = $validator->role;
-            $validator->update([
-                "role" => $request->role
+            $request->validate([
+                "name" => "nullable|string|max:255",
+                "id_card_number" => "nullable|string|min:3|unique:users,id_card_number," . $validator->user_id,
+                "born_date" => "nullable|date",
+                "gender" => "nullable|in:male,female",
+                "address" => "nullable|string|max:500",
+                "role" => "nullable|in:officer,validator",
+                "old_password" => "nullable|string|min:6",
+                "new_password" => "nullable|string|min:6|confirmed",
             ]);
+
+            $changes = [];
+            $userData = [];
+
+            if ($request->has('name')) {
+                $changes['name'] = ['old' => $validator->name, 'new' => $request->name];
+                $userData['name'] = $request->name;
+                $validator->name = $request->name;
+            }
+
+            if ($request->has('id_card_number')) {
+                $changes['id_card_number'] = ['old' => $validator->user->id_card_number, 'new' => $request->id_card_number];
+                $userData['id_card_number'] = $request->id_card_number;
+            }
+
+            if ($request->has('born_date')) {
+                $changes['born_date'] = ['old' => $validator->user->born_date, 'new' => $request->born_date];
+                $userData['born_date'] = $request->born_date;
+            }
+
+            if ($request->has('gender')) {
+                $changes['gender'] = ['old' => $validator->user->gender, 'new' => $request->gender];
+                $userData['gender'] = $request->gender;
+            }
+
+            if ($request->has('address')) {
+                $changes['address'] = ['old' => $validator->user->address, 'new' => $request->address];
+                $userData['address'] = $request->address;
+            }
+
+            if ($request->has('new_password')) {
+                if (!$request->has('old_password')) {
+                    return response()->json([
+                        "message" => "Old password is required to change password"
+                    ], 400);
+                }
+
+                if (!Hash::check($request->old_password, $validator->user->password)) {
+                    return response()->json([
+                        "message" => "Old password is incorrect"
+                    ], 400);
+                }
+
+                $userData['password'] = Hash::make($request->new_password);
+                $changes['password'] = 'changed';
+            }
+
+            if ($request->has('role')) {
+                $changes['role'] = ['old' => $validator->role, 'new' => $request->role];
+                $userData['role'] = $request->role;
+                $validator->role = $request->role;
+            }
+
+            if (!empty($userData)) {
+                $validator->user->update($userData);
+            }
+
+            if ($request->has('role') || $request->has('name')) {
+                $validator->save();
+            }
 
             DB::commit();
 
-            Log::info("Validator role updated", [
-                "admin_id" => $user->id,
+            Log::info("User updated by admin", [
+                "admin_id" => $admin->id,
                 "validator_id" => $validator->id,
-                "old_role" => $oldRole,
-                "new_role" => $request->role
+                "updated_user_id" => $validator->user_id,
+                "changes" => $changes
             ]);
 
             return response()->json([
-                "message" => "Role updated successfully",
-                "validator" => [
+                "message" => "User updated successfully",
+                "user" => [
                     "id" => $validator->id,
+                    "user_id" => $validator->user_id,
+                    "id_card_number" => $validator->user->id_card_number,
                     "name" => $validator->name,
-                    "username" => $validator->user->username ?? 'N/A',
+                    "born_date" => $validator->user->born_date,
+                    "gender" => $validator->user->gender,
+                    "address" => $validator->user->address,
                     "role" => $validator->role,
-                    "previous_role" => $oldRole
-                ]
+                    "updated_at" => $validator->user->updated_at
+                ],
+                "changes" => $changes
             ], 200);
 
         } catch (\Throwable $th) {
             DB::rollBack();
 
-            Log::error("Update validator role failed", [
+            Log::error("Update user failed", [
                 "exception" => $th->getMessage(),
                 "trace" => $th->getTraceAsString()
             ]);
@@ -288,7 +369,7 @@ class AdminController extends Controller
      * Hapus akun validator/officer
      * Delete users cascade
      */
-    public function deleteValidator(Request $request)
+    public function deleteValidator(Request $request, $validator_id)
     {
         DB::beginTransaction();
 
@@ -301,11 +382,14 @@ class AdminController extends Controller
                 ], 403);
             }
 
-            $request->validate([
-                "validator_id" => "required|exists:validators,id"
-            ]);
+            // Cari validator dari URL parameter
+            $validator = Validator::with('user')->find($validator_id);
 
-            $validator = Validator::with('user')->find($request->validator_id);
+            if (!$validator) {
+                return response()->json([
+                    "message" => "Validator not found"
+                ], 404);
+            }
 
             if ($validator->user_id === $user->id) {
                 return response()->json([
@@ -327,6 +411,7 @@ class AdminController extends Controller
             $validatorRole = $validator->role;
             $userId = $validator->user_id;
 
+            // Delete user (cascade akan menghapus validator juga)
             $validator->user->delete();
 
             DB::commit();
@@ -341,6 +426,7 @@ class AdminController extends Controller
             return response()->json([
                 "message" => "Account deleted successfully",
                 "deleted" => [
+                    "id" => $validator_id,
                     "name" => $validatorName,
                     "role" => $validatorRole
                 ]
@@ -350,59 +436,6 @@ class AdminController extends Controller
             DB::rollBack();
 
             Log::error("Delete validator failed", [
-                "exception" => $th->getMessage(),
-                "trace" => $th->getTraceAsString()
-            ]);
-
-            return response()->json([
-                "message" => "Server error",
-                "errors" => $th->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Reset password validator/officer
-     */
-    public function resetPassword(Request $request)
-    {
-        DB::beginTransaction();
-
-        try {
-            $user = $request->user();
-
-            if (!$this->checkAdminAccess($user)) {
-                return response()->json([
-                    "message" => "Only admin can access this"
-                ], 403);
-            }
-
-            $request->validate([
-                "validator_id" => "required|exists:validators,id",
-                "new_password" => "required|string|min:6"
-            ]);
-
-            $validator = Validator::find($request->validator_id);
-
-            $validator->user->update([
-                "password" => Hash::make($request->new_password)
-            ]);
-
-            DB::commit();
-
-            Log::info("Password reset for validator", [
-                "admin_id" => $user->id,
-                "validator_id" => $validator->id
-            ]);
-
-            return response()->json([
-                "message" => "Password reset successfully"
-            ], 200);
-
-        } catch (\Throwable $th) {
-            DB::rollBack();
-
-            Log::error("Reset password failed", [
                 "exception" => $th->getMessage(),
                 "trace" => $th->getTraceAsString()
             ]);

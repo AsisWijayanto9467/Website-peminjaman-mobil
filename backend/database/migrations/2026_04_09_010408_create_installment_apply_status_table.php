@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId("society_id")->constrained("societies")->cascadeOnDelete();
             $table->foreignId("installment_id")->constrained("installments")->cascadeOnDelete();
             $table->foreignId("available_month_id")->constrained("available_months")->cascadeOnDelete();
-            $table->foreignId("installment_apply_societies_id")->constrained("installment_apply_societies")->cascadeOnDelete();
+            $table->foreignId("installment_apply_society_id")->constrained("installment_apply_societies")->cascadeOnDelete();
             $table->enum("status", ["pending", "accepted", "rejected"])->default("pending");
             $table->timestamps();
         });

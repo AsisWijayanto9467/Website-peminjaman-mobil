@@ -19,25 +19,37 @@ class SocietyController extends Controller
         try {
             $user = $request->user();
 
-            if (!$user instanceof \App\Models\Society) {
-                return response()->json([
-                    "message" => "Unauthorized"
-                ], 403);
-            }
-            $payments = InstallmentPayment::with([
-                'installmentApplySociety.installment.brand',
-                'installmentApplySociety.availableMonth'
-            ])
-            ->where('society_id', $user->id)
-            ->orderBy('month_number')
-            ->get();
+        if (!$user instanceof \App\Models\Society) {
+            return response()->json([
+                "message" => "Unauthorized"
+            ], 403);
+        }
 
-            if ($payments->isEmpty()) {
-                return response()->json([
-                    "message" => "No payment schedule found. Your application might not be approved yet.",
-                    "payments" => []
-                ], 200);
-            }
+        // DEBUG: Log user ID
+        Log::info("Looking for payments with society_id: " . $user->id);
+
+        // Cek dulu tanpa relasi untuk memastikan data ada
+        $paymentsCheck = InstallmentPayment::where('society_id', $user->id)->get();
+        Log::info("Found payments: " . $paymentsCheck->count());
+
+        if ($paymentsCheck->isNotEmpty()) {
+            Log::info("Payment data sample: ", $paymentsCheck->first()->toArray());
+        }
+
+        $payments = InstallmentPayment::with([
+            'installmentApplySociety.installment.brand',
+            'installmentApplySociety.availableMonth'
+        ])
+        ->where('society_id', $user->id)
+        ->orderBy('month_number')
+        ->get();
+
+        if ($payments->isEmpty()) {
+            return response()->json([
+                "message" => "No payment schedule found. Your application might not be approved yet.",
+                "payments" => []
+            ], 200);
+        }
 
             $firstPayment = $payments->first();
             $totalPaid = $payments->where('status', 'paid')->sum('payment_amount');
@@ -137,7 +149,7 @@ class SocietyController extends Controller
             $payment->update([
                 "status" => "paid",
                 "paid_date" => now(),
-                "payment_amount" => $request->payment_amount 
+                "payment_amount" => $request->payment_amount
             ]);
 
             Log::info("Installment paid successfully", [

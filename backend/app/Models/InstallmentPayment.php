@@ -26,11 +26,11 @@ class InstallmentPayment extends Model
         'paid_date' => 'date',
     ];
 
-    public function InstallmentPayment() {
-        $this->belongsTo(InstallmentApplySociety::class);
+    public function installmentApplySociety() {
+        return $this->belongsTo(InstallmentApplySociety::class, 'installment_apply_society_id');
     }
 
     public function society() {
-        $this->belongsTo(Society::class);
+        return $this->belongsTo(Society::class);
     }
 }

@@ -30,7 +30,7 @@ class InstallmentApplySociety extends Model
     }
 
     public function InstallmentApplyStatuses() {
-        return $this->hasMany(InstallmentApplyStatus::class);
+        return $this->hasMany(InstallmentApplyStatus::class, 'installment_apply_society_id');
     }
 
     public function InstallmentPayments() {

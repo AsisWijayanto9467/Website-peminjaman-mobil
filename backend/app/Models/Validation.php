@@ -16,7 +16,7 @@ class Validation extends Model
         "job_description",
         "income",
         "reason_accepted",
-        "validators_notes"
+        "validator_notes"
     ];
 
     public function society() {
